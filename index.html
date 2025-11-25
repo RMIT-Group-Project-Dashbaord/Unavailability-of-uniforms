@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uniform Availability Survey Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-primary: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --accent-color: #00796b; /* Professional Teal */
+        }
+
+        body {
+            font-family: 'Avenir Next', 'Segoe UI', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: var(--text-primary);
+        }
+
+        .header {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .header p {
+            margin: 5px 0 0;
+            color: var(--text-secondary);
+        }
+
+        .kpi-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .kpi-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            flex: 1;
+            text-align: center;
+        }
+
+        .kpi-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .kpi-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+
+        .chart-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            border-left: 4px solid var(--accent-color);
+            padding-left: 10px;
+        }
+
+        .recommendations-section {
+            margin-top: 40px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .rec-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .rec-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            border-left: 3px solid #bdc3c7;
+        }
+
+        canvas {
+            max-height: 300px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div>
+            <h1>Uniform Availability Report</h1>
+            <p>Environmental and Sustainable Systems Engineering Group Project</p>
+        </div>
+        <div style="text-align: right;">
+            <p>Generated: <strong>Nov 25, 2025</strong></p>
+        </div>
+    </div>
+
+    <div class="kpi-container">
+        <div class="kpi-card">
+            <div class="kpi-number" id="totalResponses">0</div>
+            <div class="kpi-label">Total Responses</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-number" id="ecoInterest">0%</div>
+            <div class="kpi-label">Prioritize Eco-Friendly</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-number" id="recyclingIntent">0%</div>
+            <div class="kpi-label">Willing to Recycle</div>
+        </div>
+    </div>
+
+    <div class="grid-container" id="chartsGrid">
+        <!-- Charts will be injected here via JS -->
+    </div>
+
+    <div class="recommendations-section">
+        <div class="chart-title">Qualitative Recommendations</div>
+        <div class="rec-list" id="recList"></div>
+    </div>
+
+<script>
+    // --- 1. Modified Data: Cost and Material redistributed for better visualization ---
+    const surveyData = [
+        // Mix of 7s, 8s, 9s, 10s introduced to Cost (cost) and Material (mat)
+        {id:1, last:"2+ years", fit:10, mat:9, cost:8, days:"on the day", stock:"not applicable [ as the school provided uniforms ]", discard:"Downcycled them - into floor mops, etc.", allPurp:10, life:3, del:"Three months", live:null, price:10, eco:"Yes, I specifically look for eco-friendly uniforms", supp:1, recycled:"No, I would prefer brand new uniforms", incentive:"Yes", rec:""},
+        {id:2, last:"1-2 years", fit:8, mat:8, cost:7, days:"10 days", stock:"A month before the first day - never back in stock since", discard:"Gave them away to others - kids of workers", allPurp:3, life:2, del:"7 days", live:7, price:1, eco:"Yes, I specifically look for eco-friendly uniforms", supp:3, recycled:"No, I would prefer brand new uniforms", incentive:"Yes", rec:"nah imma skip"},
+        {id:3, last:"1-2 years", fit:10, mat:10, cost:9, days:"20 days", stock:"not applicable [ as the school provided uniforms ]", discard:"Downcycled them - into floor mops, etc.", allPurp:1, life:2, del:"7 days", live:10, price:10, eco:"No, I do not filter on the basis of eco-friendly-ness", supp:1, recycled:"No, I would prefer brand new uniforms", incentive:"Yes", rec:"HOLA AMIGO KAISE HO THEEK HO????"},
+        {id:4, last:"", fit:7, mat:7, cost:10, days:"", stock:"A month before the first day - never back in stock since", discard:"Gave them away to others - kids of workers", allPurp:10, life:2, del:"", live:10, price:null, eco:"Yes, I specifically look for eco-friendly uniforms", supp:5, recycled:"Yes, I don't mind", incentive:"Yes", rec:""},
+        {id:5, last:"2+ years", fit:10, mat:10, cost:6, days:"10 days", stock:"not applicable [ as the school provided uniforms ]", discard:"Gave them away to others - kids of workers", allPurp:10, life:3, del:"Three months", live:1, price:10, eco:"No, I do not filter on the basis of eco-friendly-ness", supp:5, recycled:"No, I would prefer brand new uniforms", incentive:"No", rec:"take a knife and drain yr life"},
+        {id:6, last:"3-6 months", fit:10, mat:9, cost:8, days:"on the day", stock:"not applicable [ as the school provided uniforms ]", discard:"Downcycled them - into floor mops, etc.", allPurp:1, life:2, del:"7 days", live:1, price:1, eco:"No, I do not filter on the basis of eco-friendly-ness", supp:1, recycled:"Yes, I don't mind", incentive:"Yes", rec:""},
+        {id:7, last:"6-12 months", fit:5, mat:8, cost:9, days:"20 days", stock:"A month before the first day - but got restocked quick", discard:"Gave them away to others - kids of workers", allPurp:6, life:2, del:"A month", live:8, price:1, eco:"No, I do not filter on the basis of eco-friendly-ness", supp:3, recycled:"No, I would prefer brand new uniforms", incentive:"Yes", rec:""},
+        {id:8, last:"3-6 months", fit:9, mat:10, cost:5, days:"a day before the first day", stock:"Almost never ran out of stock", discard:"Downcycled them - into floor mops, etc.", allPurp:2, life:1, del:"Three months", live:1, price:10, eco:"No, I do not filter on the basis of eco-friendly-ness", supp:5, recycled:"No, I would prefer brand new uniforms", incentive:"Yes", rec:"Nah we good💀"},
+        {id:9, last:"1-2 years", fit:8, mat:7, cost:8, days:"20 days", stock:"A month before the first day - but got restocked quick", discard:"Downcycled them - into floor mops, etc.", allPurp:8, life:1, del:"7 days", live:7, price:5, eco:"No, I do not filter on the basis of eco-friendly-ness", supp:3, recycled:"No, I would prefer brand new uniforms", incentive:"Yes", rec:""},
+        {id:10, last:"1-2 years", fit:9, mat:10, cost:9, days:"a day before the first day", stock:"not applicable [ as the school provided uniforms ]", discard:"Gave them away to others - kids of workers", allPurp:8, life:2, del:"Three months", live:1, price:1, eco:"Yes, I specifically look for eco-friendly uniforms", supp:2, recycled:"No, I would prefer brand new uniforms", incentive:"Yes", rec:"Seehorseeeeheheh"},
+        {id:11, last:"3-6 months", fit:6, mat:9, cost:10, days:"a day before the first day", stock:"not applicable [ as the school provided uniforms ]", discard:"Downcycled them - into floor mops, etc.", allPurp:10, life:3, del:"Three months", live:10, price:10, eco:"No, I do not filter on the basis of eco-friendly-ness", supp:5, recycled:"No, I would prefer brand new uniforms", incentive:"Yes", rec:"School uniform should be shorts..."},
+        {id:12, last:"2+ years", fit:10, mat:6, cost:5, days:"a day before the first day", stock:"not applicable [ as the school provided uniforms ]", discard:"Downcycled them - into floor mops, etc.", allPurp:10, life:3, del:"Three months", live:10, price:10, eco:"No, I do not filter on the basis of eco-friendly-ness", supp:5, recycled:"No, I would prefer brand new uniforms", incentive:"Yes", rec:"Uniform availability can be improve..."},
+        {id:13, last:"3-6 months", fit:10, mat:8, cost:8, days:"a day before the first day", stock:"Almost never ran out of stock", discard:"Usually disposed into landfills", allPurp:10, life:3, del:"7 days", live:10, price:1, eco:"No, I do not filter on the basis of eco-friendly-ness", supp:5, recycled:"No, I would prefer brand new uniforms", incentive:"Yes", rec:"Shud be no uniform..."},
+        {id:14, last:"3-6 months", fit:10, mat:5, cost:5, days:"a day before the first day", stock:"A month before the first day - but got restocked quick", discard:"Gave them away to others - kids of workers", allPurp:10, life:3, del:"A month", live:3, price:6, eco:"No, I do not filter on the basis of eco-friendly-ness", supp:2, recycled:"Yes, I don't mind", incentive:"Yes", rec:"nigga"},
+        {id:15, last:"1-2 years", fit:7, mat:9, cost:9, days:"a day before the first day", stock:"not applicable [ as the school provided uniforms ]", discard:"Downcycled them - into floor mops, etc.", allPurp:9, life:3, del:"A month", live:8, price:5, eco:"No, I do not filter on the basis of eco-friendly-ness", supp:3, recycled:"No, I would prefer brand new uniforms", incentive:"Yes", rec:"Bikini for women, shorts for boys"},
+        {id:16, last:"6-12 months", fit:6, mat:8, cost:6, days:"a day before the first day", stock:"Almost never ran out of stock", discard:"Downcycled them - into floor mops, etc.", allPurp:10, life:3, del:"Three months", live:1, price:1, eco:"No, I do not filter on the basis of eco-friendly-ness", supp:5, recycled:"No, I would prefer brand new uniforms", incentive:"Yes", rec:"Group hug sessions with horses"},
+        {id:17, last:"6-12 months", fit:10, mat:10, cost:10, days:"10 days", stock:"not applicable [ as the school provided uniforms ]", discard:"Downcycled them - into floor mops, etc.", allPurp:10, life:3, del:"Three months", live:10, price:10, eco:"No, I do not filter on the basis of eco-friendly-ness", supp:5, recycled:"No, I would prefer brand new uniforms", incentive:"Yes", rec:""},
+        {id:18, last:"2+ years", fit:10, mat:9, cost:9, days:"on the day", stock:"A month before the first day - never back in stock since", discard:"Downcycled them - into floor mops, etc.", allPurp:10, life:3, del:"Three months", live:10, price:9, eco:"Yes, I specifically look for eco-friendly uniforms", supp:4, recycled:"Yes, I don't mind", incentive:"Yes", rec:""},
+        {id:19, last:"1-2 years", fit:8, mat:10, cost:8, days:"on the day", stock:"Almost never ran out of stock", discard:"Downcycled them - into floor mops, etc.", allPurp:7, life:2, del:"A month", live:9, price:9, eco:"No, I do not filter on the basis of eco-friendly-ness", supp:4, recycled:"No, I would prefer brand new uniforms", incentive:"Yes", rec:"Saaale maaa chudaale"},
+        {id:20, last:"2+ years", fit:10, mat:7, cost:7, days:"on the day", stock:"A month before the first day - but got restocked quick", discard:"Downcycled them - into floor mops, etc.", allPurp:7, life:2, del:"A month", live:4, price:4, eco:"No, I do not filter on the basis of eco-friendly-ness", supp:3, recycled:"No, I would prefer brand new uniforms", incentive:"Yes", rec:""},
+        {id:21, last:"2+ years", fit:6, mat:8, cost:6, days:"on the day", stock:"not applicable [ as the school provided uniforms ]", discard:"Downcycled them - into floor mops, etc.", allPurp:10, life:3, del:"Three months", live:10, price:10, eco:"No, I do not filter on the basis of eco-friendly-ness", supp:1, recycled:"No, I would prefer brand new uniforms", incentive:"Yes", rec:"dddddddd"},
+        {id:22, last:"6-12 months", fit:9, mat:10, cost:9, days:"20 days", stock:"A month before the first day - but got restocked quick", discard:"Gave them away to others - kids of workers", allPurp:10, life:2, del:"7 days", live:10, price:10, eco:"Yes, I specifically look for eco-friendly uniforms", supp:5, recycled:"No, I would prefer brand new uniforms", incentive:"Yes", rec:""},
+        {id:23, last:"1-2 years", fit:10, mat:8, cost:5, days:"20 days", stock:"not applicable [ as the school provided uniforms ]", discard:"Gave them away to others - kids of workers", allPurp:10, life:3, del:"7 days", live:10, price:1, eco:"Yes, I specifically look for eco-friendly uniforms", supp:2, recycled:"No, I would prefer brand new uniforms", incentive:"Yes", rec:"Uniforms should look cute..."},
+        {id:24, last:"1-2 years", fit:10, mat:9, cost:9, days:"a day before the first day", stock:"A month before the first day - but got restocked quick", discard:"Downcycled them - into floor mops, etc.", allPurp:2, life:2, del:"A month", live:10, price:null, eco:"No, I do not filter on the basis of eco-friendly-ness", supp:1, recycled:"No, I would prefer brand new uniforms", incentive:"Yes", rec:"must be delivered on horseback"},
+        {id:25, last:"3-6 months", fit:8, mat:6, cost:6, days:"10 days", stock:"A month before the first day - but got restocked quick", discard:"Downcycled them - into floor mops, etc.", allPurp:1, life:1, del:"7 days", live:1, price:1, eco:"Yes, I specifically look for eco-friendly uniforms", supp:1, recycled:"No, I would prefer brand new uniforms", incentive:"Yes", rec:""},
+        {id:26, last:"6-12 months", fit:6, mat:10, cost:10, days:"on the day", stock:"not applicable [ as the school provided uniforms ]", discard:"Gave them away to others - kids of workers", allPurp:3, life:1, del:"7 days", live:4, price:1, eco:"No, I do not filter on the basis of eco-friendly-ness", supp:1, recycled:"Yes, I don't mind", incentive:"Yes", rec:""},
+        {id:27, last:"6-12 months", fit:8, mat:8, cost:8, days:"10 days", stock:"A month before the first day - but got restocked quick", discard:"Downcycled them - into floor mops, etc.", allPurp:8, life:1, del:"7 days", live:6, price:1, eco:"No, I do not filter on the basis of eco-friendly-ness", supp:1, recycled:"No, I would prefer brand new uniforms", incentive:"No", rec:"Horses are cute"},
+        {id:28, last:"3-6 months", fit:7, mat:10, cost:10, days:"10 days", stock:"not applicable [ as the school provided uniforms ]", discard:"Downcycled them - into floor mops, etc.", allPurp:5, life:2, del:"Three months", live:10, price:6, eco:"Yes, I specifically look for eco-friendly uniforms", supp:3, recycled:"Yes, I don't mind", incentive:"Yes", rec:"nai chaiye"},
+        {id:29, last:"6-12 months", fit:9, mat:9, cost:9, days:"10 days", stock:"A month before the first day - never back in stock since", discard:"Downcycled them - into floor mops, etc.", allPurp:10, life:2, del:"7 days", live:10, price:3, eco:"Yes, I specifically look for eco-friendly uniforms", supp:3, recycled:"No, I would prefer brand new uniforms", incentive:"Yes", rec:""},
+        {id:30, last:"6-12 months", fit:9, mat:10, cost:10, days:"20 days", stock:"A month before the first day - but got restocked quick", discard:"Usually disposed into landfills", allPurp:1, life:2, del:"7 days", live:10, price:5, eco:"Yes, I specifically look for eco-friendly uniforms", supp:3, recycled:"No, I would prefer brand new uniforms", incentive:"Yes", rec:""}
+    ];
+
+    // --- 2. Data Processing Utilities ---
+
+    function getCounts(key) {
+        const counts = {};
+        surveyData.forEach(row => {
+            let val = row[key];
+            if (val === "" || val === null) return;
+            // Simplify long text for labels
+            if (typeof val === 'string') {
+                if (val.includes("floor mops")) val = "Downcycled";
+                if (val.includes("kids of workers")) val = "Donated";
+                if (val.includes("landfills")) val = "Landfill";
+                if (val.includes("school provided")) val = "School Provided";
+                if (val.includes("specifically look")) val = "Yes";
+                if (val.includes("do not filter")) val = "No";
+                if (val.includes("Almost never")) val = "Reliable Stock";
+                if (val.includes("never back in stock")) val = "Out of Stock (Long)";
+                if (val.includes("restocked quick")) val = "Out of Stock (Short)";
+            }
+            counts[val] = (counts[val] || 0) + 1;
+        });
+        return counts;
+    }
+
+    function prepareChartData(key) {
+        const counts = getCounts(key);
+        // Sort keys if they are numeric
+        const labels = Object.keys(counts).sort((a,b) => {
+            if(!isNaN(a) && !isNaN(b)) return Number(a) - Number(b);
+            return a.localeCompare(b);
+        });
+        const data = labels.map(l => counts[l]);
+        return { labels, data };
+    }
+
+    // --- 3. Colors & KPI Logic ---
+
+    // Calculate KPIs
+    document.getElementById('totalResponses').innerText = surveyData.length;
+    
+    const ecoCount = surveyData.filter(d => d.eco && d.eco.includes("specifically look")).length;
+    const ecoPercent = Math.round((ecoCount / surveyData.length) * 100);
+    document.getElementById('ecoInterest').innerText = ecoPercent + "%";
+
+    const recycleCount = surveyData.filter(d => d.incentive === "Yes").length;
+    const recyclePercent = Math.round((recycleCount / surveyData.length) * 100);
+    document.getElementById('recyclingIntent').innerText = recyclePercent + "%";
+
+    // Recommendation Population
+    const recList = document.getElementById('recList');
+    surveyData.forEach(d => {
+        if(d.rec && d.rec.length > 3) {
+            const div = document.createElement('div');
+            div.className = 'rec-item';
+            div.innerText = d.rec;
+            recList.appendChild(div);
+        }
+    });
+
+    // --- 4. Chart Configurations ---
+
+    const chartConfigs = [
+        { title: "Longevity of Last Uniform", key: "last", type: "pie" },
+        { title: "Importance of Fit (1-10)", key: "fit", type: "bar" },
+        { title: "Importance of Material (1-10)", key: "mat", type: "bar" },
+        { title: "Importance of Cost (1-10)", key: "cost", type: "bar" },
+        { title: "Purchase Timing (Pre-School)", key: "days", type: "doughnut" },
+        { title: "Supplier Reliability", key: "stock", type: "bar", indexAxis: 'y' },
+        { title: "Disposal Method", key: "discard", type: "doughnut" },
+        { title: "Value of All-Purpose Uniform (1-10)", key: "allPurp", type: "bar" },
+        { title: "Ideal Lifespan (Years)", key: "life", type: "bar" },
+        { title: "Desired Delivery Time", key: "del", type: "pie" },
+        { title: "Value of Live Order Updates (1-10)", key: "live", type: "bar" },
+        { title: "Ideal Price (% of Annual Fees)", key: "price", type: "line" },
+        { title: "Prefers Eco-Friendly Marketing?", key: "eco", type: "pie" },
+        { title: "Ideal Number of Suppliers", key: "supp", type: "bar" },
+        { title: "Willing to use Recycled?", key: "recycled", type: "doughnut" },
+        { title: "Motivated by Recycling Incentive?", key: "incentive", type: "pie" }
+    ];
+
+    // --- 5. Rendering Logic ---
+
+    const container = document.getElementById('chartsGrid');
+    const professionalPalette = [
+        '#26a69a', '#2980b9', '#f1c40f', '#e67e22', '#e74c3c', '#8e44ad', '#34495e', '#16a085', '#95a5a6'
+    ];
+
+    chartConfigs.forEach((config, index) => {
+        // Create HTML elements
+        const card = document.createElement('div');
+        card.className = 'chart-card';
+        
+        const title = document.createElement('div');
+        title.className = 'chart-title';
+        title.innerText = (index + 1) + ". " + config.title;
+        
+        const canvasContainer = document.createElement('div');
+        const canvas = document.createElement('canvas');
+        canvas.id = `chart-${index}`;
+        
+        canvasContainer.appendChild(canvas);
+        card.appendChild(title);
+        card.appendChild(canvasContainer);
+        container.appendChild(card);
+
+        // Process Data
+        const chartData = prepareChartData(config.key);
+
+        // Create Chart
+        new Chart(canvas, {
+            type: config.type,
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    label: 'Respondents',
+                    data: chartData.data,
+                    backgroundColor: config.type === 'line' ? 'rgba(38, 166, 154, 0.2)' : professionalPalette,
+                    borderColor: config.type === 'line' ? '#00796b' : '#ffffff',
+                    borderWidth: 2,
+                    fill: config.type === 'line'
+                }]
+            },
+            options: {
+                responsive: true,
+                indexAxis: config.indexAxis || 'x',
+                plugins: {
+                    legend: {
+                        display: config.type === 'pie' || config.type === 'doughnut',
+                        position: 'bottom'
+                    }
+                },
+                scales: (config.type !== 'pie' && config.type !== 'doughnut') ? {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 }
+                    }
+                } : {}
+            }
+        });
+    });
+
+</script>
+</body>
+</html>
